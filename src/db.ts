@@ -1,4 +1,5 @@
-const mysql = require("mysql2");
+import mysql, { PoolConnection } from "mysql2";
+
 
 // DB 연결 설정
 const pool = mysql.createPool({
@@ -10,7 +11,7 @@ const pool = mysql.createPool({
 });
 
 // 연결 테스트
-pool.getConnection((err, connection) => {
+pool.getConnection((err: NodeJS.ErrnoException | null, connection: PoolConnection) => {
   if (err) {
     console.error("DB 연결 실패 ❌", err);
     return;
@@ -18,5 +19,6 @@ pool.getConnection((err, connection) => {
   console.log("MariaDB 연결 성공 🎉");
   connection.release();
 });
+// 근데 any 써도될꺼같은데 저렇게 어렵게해야할까..? 🤔
 
-module.exports = pool.promise();
+export default pool.promise();
