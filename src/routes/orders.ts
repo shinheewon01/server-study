@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
-import mysql from "mysql2/promise";
-import db from "../db";
+import Order from "../models/Order"; 
 
 const router = Router();
 
@@ -11,8 +10,8 @@ interface OrderRequestBody {
 // [GET] : 조회
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const [rows] = await db.query("SELECT * FROM orders");
-    res.json(rows);
+    const orders = await Order.find();
+    res.json(orders);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "DB 조회 실패" });
@@ -34,12 +33,9 @@ router.post(
 
     try {
       // 1. 중복체크
-      const [exists] = await db.query<mysql.RowDataPacket[]>(
-        "SELECT id FROM orders WHERE product = ?",
-        [product]
-      );
+      const exists = await Order.findOne({ product }); // ⭐ MongoDB 쿼리
 
-      if (exists.length > 0) {
+      if (exists) {
         return res.status(409).json({
           success: false,
           message: "이미 존재하는 상품입니다",
@@ -47,21 +43,15 @@ router.post(
       }
 
       // 2. 등록
-      const [result] = await db.query<mysql.ResultSetHeader>(
-        "INSERT INTO orders (product, status) VALUES (?, ?)",
-        [product, "배송대기"]
-      );
-
-      // 3. 등록된 데이터 조회
-      const [rows] = await db.query<mysql.RowDataPacket[]>(
-        "SELECT * FROM orders WHERE id = ?",
-        [result.insertId]
-      );
+      const newOrder = await Order.create({
+        product,
+        status: "배송대기",
+      }); // ⭐ MongoDB insert
 
       res.status(201).json({
         success: true,
         message: "주문 등록 성공",
-        data: rows[0],
+        data: newOrder,
       });
     } catch (err: any) {
       console.error(err);
