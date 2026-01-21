@@ -4,9 +4,9 @@ import ordersRouter from "./routes/orders";
 import connectDB from "./db"; 
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT;
 
-app.use(cors());
+app.use(cors({origin: process.env.CORS_ORIGIN}));
 app.use(express.json());
 
 // Context Path 설정
